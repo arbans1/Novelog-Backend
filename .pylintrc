@@ -1,0 +1,5 @@
+[MESSAGE CONTROL]
+good-names=db,id
+
+[FORMAT]
+max-line-length=120

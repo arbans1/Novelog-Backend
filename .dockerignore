@@ -1,0 +1,14 @@
+.vscode/
+test/
+htmlcov/
+__pycache__/
+.coverage
+.coverage.*
+pytest.ini
+.start.bat
+*.cmd
+Untitled*
+.gitignore
+pylint.txt
+README.md
+*.env
