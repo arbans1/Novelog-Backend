@@ -5,26 +5,10 @@ from datetime import datetime
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from src.api import router as api_router
 from src.core.config import settings
-
-
-# pylint: disable=too-few-public-methods
-class DBSessionMiddleware(BaseHTTPMiddleware):
-    """요청마다 데이터베이스 세션을 생성하고, 응답 후에 세션을 종료합니다."""
-
-    async def dispatch(self, request: Request, call_next: Response) -> Response:
-        """요청마다 데이터베이스 세션을 생성하고, 응답 후에 세션을 종료합니다."""
-        response = await call_next(request)
-        db = getattr(request.state, "db", None)
-        if isinstance(db, AsyncSession):
-            await db.commit()
-        return response
-
 
 app = FastAPI(
     title=settings.PROJECT_NAME,  # 프로젝트 이름을 설정합니다.
@@ -39,10 +23,6 @@ app.add_middleware(
     allow_methods=["*"],  # 모든 HTTP 메서드에 대해 CORS를 허용합니다.
     allow_headers=["*"],  # 모든 HTTP 헤더에 대해 CORS를 허용합니다.
 )
-
-# 데이터베이스 세션 미들웨어 등록
-app.add_middleware(DBSessionMiddleware)
-
 
 if settings.DEBUG:
 
