@@ -5,7 +5,7 @@ from functools import partial
 
 from fastapi import HTTPException, status
 from pydantic import BaseModel, Field
-from typing_extensions import Annotated
+from typing_extensions import Annotated, Sequence
 
 from src.libs.http_status_codes import STATUS_CODE_DESCRIPTION
 
@@ -16,7 +16,7 @@ __all__ = (
 
 
 def get_error_response(
-    *args: Enum,
+    *args: Enum | Sequence[Enum],
 ):
     """응답 메시지를 반환합니다.
 
@@ -28,7 +28,11 @@ def get_error_response(
     """
     return_examples = defaultdict(list)
     for error_enum in args:
-        return_examples[error_enum.value.status_code].append(error_enum)
+        if isinstance(error_enum, Enum):
+            return_examples[error_enum.value.status_code].append(error_enum)
+        else:
+            for error in error_enum:
+                return_examples[error.value.status_code].append(error)
 
     return {
         status_code: {

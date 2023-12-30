@@ -21,7 +21,7 @@ async def get_user_service(db: Annotated[AsyncSession, Depends(deps.get_db)]) ->
     response_model=UserDTO,
     status_code=status.HTTP_201_CREATED,
     summary="회원을 생성합니다.",
-    responses=get_error_response(*UserCreate.errors + UserDTO.errors + UserService.create_errors),
+    responses=get_error_response(UserCreate.errors + UserDTO.errors + UserService.create_errors),
 )
 async def create_user(
     user_service: Annotated[UserService, Depends(get_user_service)],

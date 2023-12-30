@@ -3,9 +3,10 @@ from datetime import datetime, timedelta
 
 import bcrypt
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt
+from jose import JWTError, jwt
 
 from src.core.config import settings
+from src.libs.responses import UserError
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login")
 
@@ -31,18 +32,18 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode()
 
 
-def create_jwt_token(data: dict, expires_delta: timedelta | None = None) -> str:
-    """
-    JWT 토큰을 생성합니다.
+def create_jwt_token(data: dict, expires_minutes: int = 15) -> str:
+    """JWT 토큰을 생성합니다.
 
     Args:
         data (dict): 토큰에 담을 데이터
-        expires_delta (timedelta, optional): 토큰 만료 시간. Defaults to None.
+        expires_minutes (int): 토큰 만료 시간. Defaults to 15.
 
     Returns:
         str: JWT 토큰
     """
     to_encode = data.copy()
+    expires_delta = timedelta(minutes=expires_minutes)
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
@@ -50,3 +51,20 @@ def create_jwt_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY.get_secret_value(), algorithm=settings.JWT_ALGORITHM)
     return encoded_jwt
+
+
+def decode_jwt_token(token: str) -> dict:
+    """JWT 토큰을 디코딩합니다.
+
+    Args:
+        token (str): JWT 토큰
+
+    Returns:
+        dict: 디코딩된 JWT 토큰
+    """
+    credentials_exception = UserError.CREDENTIALS_EXCEPTION.http_exception
+    credentials_exception.headers = {"WWW-Authenticate": "Bearer"}
+    try:
+        return jwt.decode(token, settings.SECRET_KEY.get_secret_value(), algorithms=[settings.JWT_ALGORITHM])
+    except JWTError as exc:
+        raise credentials_exception from exc
