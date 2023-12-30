@@ -35,7 +35,10 @@ class UserService:
         Returns:
             UserDto: 유저 DTO입니다.
         """
-        return to_dto(await self.crud_user.get(id, email, nickname))
+        user = await self.crud_user.get(id, email, nickname)
+        if user:
+            return to_dto(user)
+        raise UserError.USER_NOT_FOUND.http_exception
 
     async def create(self, command: UserCreate) -> UserDTO:
         """회원 정보(이메일, 닉네임, 생년월일)를 등록한다."""
@@ -54,6 +57,11 @@ class UserService:
         )
         return to_dto(await self.crud_user.save(model))
 
+    async def delete(self, id: int) -> None:
+        """유저를 삭제합니다."""
+        if not await self.crud_user.delete(id):
+            raise UserError.USER_NOT_FOUND.http_exception
+
     @classmethod
     @property
     def create_errors(cls) -> tuple:
@@ -62,3 +70,9 @@ class UserService:
             UserError.EMAIL_ALREADY_EXISTS,
             UserError.NICKNAME_ALREADY_EXISTS,
         )
+
+    @classmethod
+    @property
+    def get_errors(cls) -> tuple:
+        """에러 메시지를 반환합니다."""
+        return (UserError.USER_NOT_FOUND,)

@@ -5,6 +5,7 @@ from typing_extensions import Annotated
 
 from src.core.security import decode_jwt_token, oauth2_scheme
 from src.db import AsyncSessionLocal
+from src.domain.auth.schemas import TokenPayload
 
 __all__ = ("get_db",)
 
@@ -23,4 +24,4 @@ async def get_token_payload(
     token: Annotated[str, Depends(oauth2_scheme)],
 ) -> dict:
     """토큰의 payload를 반환합니다."""
-    return decode_jwt_token(token)
+    return TokenPayload(**decode_jwt_token(token))

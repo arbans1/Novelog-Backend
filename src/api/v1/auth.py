@@ -66,10 +66,10 @@ async def logout(
 
 @router.post(
     "/test",
+    response_model=TokenPayload,
     status_code=status.HTTP_200_OK,
     summary="토큰을 테스트합니다.",
     responses=get_error_response(AuthService.token_errors),
-    response_model=TokenPayload,
     response_model_exclude_unset=True,
 )
 async def test(
