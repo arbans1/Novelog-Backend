@@ -1,0 +1,13 @@
+users: {
+  shape: sql_table
+  id: int {constraint: primary_key} # 아이디
+  login_id: varchar(255) {constraint: unique} # 이메일
+  hashed_password: varchar(72) # 해시된 비밀번호
+  nickname: varchar(255) # 닉네임
+  is_admin: boolean # 관리자 여부
+  is_active: boolean # 활성화 여부
+  created_at: timestamp # 생성일
+  updated_at: timestamp # 수정일
+  deleted_at: timestamp # 삭제일
+}
+

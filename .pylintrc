@@ -3,3 +3,6 @@ good-names=db,id
 
 [FORMAT]
 max-line-length=120
+
+[CLASS]
+min-public-methods=0
