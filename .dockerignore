@@ -12,3 +12,5 @@ Untitled*
 pylint.txt
 README.md
 *.env
+sql/
+.pre-commit-config.yaml
