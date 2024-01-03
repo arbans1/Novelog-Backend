@@ -61,9 +61,22 @@ BadRequestError = partial(Error, status_code=status.HTTP_400_BAD_REQUEST)
 UnauthorizedError = partial(Error, status_code=status.HTTP_401_UNAUTHORIZED)
 ForbiddenError = partial(Error, status_code=status.HTTP_403_FORBIDDEN)
 NotFoundError = partial(Error, status_code=status.HTTP_404_NOT_FOUND)
+InternalServerError = partial(Error, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class UserError(Enum):
+class BaseError(Enum):
+    """에러 메시지를 정의합니다."""
+
+    def __str__(self):
+        return str(self.value)
+
+    @property
+    def http_exception(self):
+        """HTTP 예외를 반환합니다."""
+        return HTTPException(status_code=self.value.status_code, detail=self.value.detail)
+
+
+class UserError(BaseError):
     """사용자 관련 에러 메시지"""
 
     # 401
@@ -88,10 +101,16 @@ class UserError(Enum):
     PASSWORD_TOO_LONG = BadRequestError(detail="비밀번호는 20자 이하이어야 합니다.")
     PASSWORD_MIX_REQUIRD = BadRequestError(detail="비밀번호에는 영문과 숫자가 모두 포함되어야 합니다.")
 
-    def __str__(self):
-        return str(self.value)
 
-    @property
-    def http_exception(self):
-        """HTTP 예외를 반환합니다."""
-        return HTTPException(status_code=self.value.status_code, detail=self.value.detail)
+class NovelError(BaseError):
+    """소설 관련 에러 메시지"""
+
+    # 400
+    NEED_NOVEL_REF = BadRequestError(detail="소설 ID 혹은 URL이 필요합니다.")
+    NOVEL_CREATE_FAILED = BadRequestError(detail="소설 생성에 실패했습니다.")
+
+    # 404
+    NOVEL_NOT_FOUND = NotFoundError(detail="존재하지 않는 소설입니다.")
+
+    # 500
+    UNEXPECTED_ERROR = InternalServerError(detail="예상치 못한 에러가 발생했습니다.")

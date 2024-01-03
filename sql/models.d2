@@ -15,8 +15,15 @@ novels: {
   shape: sql_table
   id: int {constraint: primary_key} # 아이디
   title: varchar(255) # 제목
+  author: varchar(255) # 작가
   description: text # 설명
   published_at: timestamp # 공개일
+  category: varchar(20) # 카테고리
+  ridi_id: varchar(20) # 리디북스 아이디
+  kakao_id: varchar(20) # 카카오 페이지 아이디
+  series_id: varchar(20) # 시리즈 아이디
+  munpia_id: varchar(20) # 문피아 아이디
+  image_url: varchar(255) # 이미지 URL
   created_at: timestamp # 생성일
   updated_at: timestamp # 수정일
 }
@@ -25,8 +32,13 @@ chapters: {
   shape: sql_table
   id: int {constraint: primary_key} # 아이디
   novel_id: int {constraint: foreign_key} # 소설 아이디
+  chapter_no: int # 챕터 번호
   title: varchar(255) # 제목
   published_at: timestamp # 공개일
+  ridi_id: varchar(20) # 리디북스 아이디
+  kakao_id: varchar(20) # 카카오 페이지 아이디
+  series_id: varchar(20) # 시리즈 아이디
+  munpia_id: varchar(20) # 문피아 아이디
   created_at: timestamp # 생성일
   updated_at: timestamp # 수정일
 }

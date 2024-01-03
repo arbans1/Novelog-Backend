@@ -25,6 +25,7 @@ class CommonSettings(StartSettings):
     JWT_ALGORITHM: str = "HS256"
 
     DB_PATH: PostgresDsn = Field(..., json_schema_extra={"env": "DB_PATH"})
+    NOVEL_FETCH_URL: str = Field(..., json_schema_extra={"env": "NOVEL_FETCH_URL"})
 
     # AUTH
     ACCESS_TOKEN_EXPIRE_MINUTES: int

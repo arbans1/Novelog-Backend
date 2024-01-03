@@ -27,34 +27,63 @@ CREATE TABLE novels (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
+    author VARCHAR(255),
     published_at TIMESTAMP WITH TIME ZONE,
+    category VARCHAR(20) NOT NULL,
+    ridi_id VARCHAR(20) UNIQUE,
+    kakao_id VARCHAR(20) UNIQUE,
+    series_id VARCHAR(20) UNIQUE,
+    munpia_id VARCHAR(20) UNIQUE,
+    image_url VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX novels_title_author_idx ON novels(title, author);
+
 COMMENT ON TABLE novels IS '소설';
 COMMENT ON COLUMN novels.id IS '아이디 (기본 키)';
 COMMENT ON COLUMN novels.title IS '제목';
+COMMENT ON COLUMN novels.author IS '작가';
 COMMENT ON COLUMN novels.description IS '설명';
 COMMENT ON COLUMN novels.published_at IS '공개일';
+COMMENT ON COLUMN novels.category IS '카테고리';
+COMMENT ON COLUMN novels.ridi_id IS '리디북스 아이디';
+COMMENT ON COLUMN novels.kakao_id IS '카카오 페이지 아이디';
+COMMENT ON COLUMN novels.series_id IS '시리즈 아이디';
+COMMENT ON COLUMN novels.munpia_id IS '문피아 아이디';
+COMMENT ON COLUMN novels.image_url IS '이미지 URL';
 COMMENT ON COLUMN novels.created_at IS '생성일';
 COMMENT ON COLUMN novels.updated_at IS '수정일';
+
 
 -- Chapter Table
 CREATE TABLE chapters (
     id SERIAL PRIMARY KEY,
     novel_id INT NOT NULL REFERENCES novels(id),
+    chapter_no INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     published_at TIMESTAMP WITH TIME ZONE,
+    ridi_id VARCHAR(20) UNIQUE,
+    kakao_id VARCHAR(20) UNIQUE,
+    series_id VARCHAR(20) UNIQUE,
+    munpia_id VARCHAR(20) UNIQUE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX chapters_novel_id_chapter_no_idx ON chapters(novel_id, chapter_no DESC);
+
 COMMENT ON TABLE chapters IS '챕터';
 COMMENT ON COLUMN chapters.id IS '아이디 (기본 키)';
 COMMENT ON COLUMN chapters.novel_id IS '소설 아이디 (외래 키)';
+COMMENT ON COLUMN chapters.chapter_no IS '챕터 번호';
 COMMENT ON COLUMN chapters.title IS '제목';
 COMMENT ON COLUMN chapters.published_at IS '공개일';
+COMMENT ON COLUMN chapters.ridi_id IS '리디북스 아이디';
+COMMENT ON COLUMN chapters.kakao_id IS '카카오 페이지 아이디';
+COMMENT ON COLUMN chapters.series_id IS '시리즈 아이디';
+COMMENT ON COLUMN chapters.munpia_id IS '문피아 아이디';
 COMMENT ON COLUMN chapters.created_at IS '생성일';
 COMMENT ON COLUMN chapters.updated_at IS '수정일';
 
