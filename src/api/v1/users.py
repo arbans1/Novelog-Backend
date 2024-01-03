@@ -6,8 +6,8 @@ from typing_extensions import Annotated
 from src.api import deps
 from src.domain.auth.schemas import TokenPayload
 from src.domain.auth.service import AuthService
-from src.domain.user.schemas import UserCreate, UserDTO
-from src.domain.user.service import UserService
+from src.domain.users.schemas import UserCreate, UserDTO
+from src.domain.users.service import UserService
 from src.libs.responses import get_error_response
 
 router = APIRouter()

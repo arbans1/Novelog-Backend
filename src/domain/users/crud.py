@@ -3,7 +3,7 @@
 from sqlalchemy import or_, select
 
 from src.domain.base.crud import CRUD
-from src.domain.user.models import User
+from src.domain.users.models import User
 
 
 class CRUDUser(CRUD[User]):
