@@ -16,7 +16,7 @@ class Base(DeclarativeBase):  # pylint: disable=R0903
     __abstract__ = True
     __tablename__: str
 
-    id: Mapped[int] = mapped_column(primary_key=True, type_=INTEGER, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, type_=INTEGER, autoincrement=True, comment="ID")
     created_at: Mapped[datetime] = mapped_column(
         server_default=func.now(), type_=TIMESTAMP(timezone=True), comment="생성일"
     )
