@@ -2,8 +2,10 @@
 import logging
 
 import requests
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
+from src.domain.novels.crud import CRUDNovel
 from src.domain.novels.schemas import NovelCreate, NovelDTO
 from src.libs.responses import NovelError
 
@@ -13,8 +15,14 @@ logger = logging.getLogger(__name__)
 class NovelService:
     """소설 관련 서비스"""
 
+    def __init__(self, db: AsyncSession):
+        self.crud_novel = CRUDNovel(db)
+
     async def create(self, command: NovelCreate) -> NovelDTO:
         """소설을 생성합니다."""
+        if await self.crud_novel.get_by_platform_id(command.platform, command.id):
+            raise NovelError.NOVEL_ALREADY_EXISTS.http_exception
+
         response = requests.post(
             settings.NOVEL_FETCH_URL, json=command.model_dump(mode="json", exclude_none=True), timeout=30
         )
@@ -38,6 +46,7 @@ class NovelService:
     def create_errors(cls) -> tuple:
         """에러 메시지"""
         return (
+            NovelError.NOVEL_ALREADY_EXISTS,
             NovelError.NOVEL_CREATE_FAILED,
             NovelError.NOVEL_NOT_FOUND,
             NovelError.UNEXPECTED_ERROR,

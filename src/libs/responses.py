@@ -12,6 +12,7 @@ from src.libs.http_status_codes import STATUS_CODE_DESCRIPTION
 __all__ = (
     "get_error_response",
     "UserError",
+    "NovelError",
 )
 
 
@@ -57,13 +58,6 @@ class Error(BaseModel):
         return str(self.detail)
 
 
-BadRequestError = partial(Error, status_code=status.HTTP_400_BAD_REQUEST)
-UnauthorizedError = partial(Error, status_code=status.HTTP_401_UNAUTHORIZED)
-ForbiddenError = partial(Error, status_code=status.HTTP_403_FORBIDDEN)
-NotFoundError = partial(Error, status_code=status.HTTP_404_NOT_FOUND)
-InternalServerError = partial(Error, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 class BaseError(Enum):
     """에러 메시지를 정의합니다."""
 
@@ -74,6 +68,15 @@ class BaseError(Enum):
     def http_exception(self):
         """HTTP 예외를 반환합니다."""
         return HTTPException(status_code=self.value.status_code, detail=self.value.detail)
+
+
+BadRequestError = partial(Error, status_code=status.HTTP_400_BAD_REQUEST)
+UnauthorizedError = partial(Error, status_code=status.HTTP_401_UNAUTHORIZED)
+ForbiddenError = partial(Error, status_code=status.HTTP_403_FORBIDDEN)
+NotFoundError = partial(Error, status_code=status.HTTP_404_NOT_FOUND)
+ConflictError = partial(Error, status_code=status.HTTP_409_CONFLICT)
+UnprocessableEntityError = partial(Error, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+InternalServerError = partial(Error, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class UserError(BaseError):
@@ -89,17 +92,18 @@ class UserError(BaseError):
     # 404
     USER_NOT_FOUND = NotFoundError(detail="존재하지 않는 사용자입니다.")
 
-    # 400
-    EMAIL_ALREADY_EXISTS = BadRequestError(detail="이미 등록된 이메일입니다.")
+    # 409
+    EMAIL_ALREADY_EXISTS = ConflictError(detail="이미 등록된 이메일입니다.")
+    NICKNAME_ALREADY_EXISTS = ConflictError(detail="이미 등록된 닉네임입니다.")
 
-    NICKNAME_ALREADY_EXISTS = BadRequestError(detail="이미 등록된 닉네임입니다.")
-    NICKNAME_TOO_SHORT = BadRequestError(detail="닉네임은 2자 이상이어야 합니다.")
-    NICKNAME_TOO_LONG = BadRequestError(detail="닉네임은 10자 이하이어야 합니다.")
-    NICKNAME_INVALID = BadRequestError(detail="닉네임에 사용할 수 없는 문자가 포함되어 있습니다.")
+    # 422
+    NICKNAME_TOO_SHORT = UnprocessableEntityError(detail="닉네임은 2자 이상이어야 합니다.")
+    NICKNAME_TOO_LONG = UnprocessableEntityError(detail="닉네임은 10자 이하이어야 합니다.")
+    NICKNAME_INVALID = UnprocessableEntityError(detail="닉네임에 사용할 수 없는 문자가 포함되어 있습니다.")
 
-    PASSWORD_TOO_SHORT = BadRequestError(detail="비밀번호는 6자 이상이어야 합니다.")
-    PASSWORD_TOO_LONG = BadRequestError(detail="비밀번호는 20자 이하이어야 합니다.")
-    PASSWORD_MIX_REQUIRD = BadRequestError(detail="비밀번호에는 영문과 숫자가 모두 포함되어야 합니다.")
+    PASSWORD_TOO_SHORT = UnprocessableEntityError(detail="비밀번호는 6자 이상이어야 합니다.")
+    PASSWORD_TOO_LONG = UnprocessableEntityError(detail="비밀번호는 20자 이하이어야 합니다.")
+    PASSWORD_MIX_REQUIRD = UnprocessableEntityError(detail="비밀번호에는 영문과 숫자가 모두 포함되어야 합니다.")
 
 
 class NovelError(BaseError):
@@ -111,6 +115,9 @@ class NovelError(BaseError):
 
     # 404
     NOVEL_NOT_FOUND = NotFoundError(detail="존재하지 않는 소설입니다.")
+
+    # 409
+    NOVEL_ALREADY_EXISTS = ConflictError(detail="이미 등록된 소설입니다.")
 
     # 500
     UNEXPECTED_ERROR = InternalServerError(detail="예상치 못한 에러가 발생했습니다.")
