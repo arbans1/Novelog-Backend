@@ -1,4 +1,5 @@
 """소설 DTO 정의"""
+# pylint: disable=redefined-builtin
 from datetime import datetime
 from enum import Enum
 
@@ -7,8 +8,10 @@ from typing_extensions import Annotated
 
 from src.domain.base.schemas import DTO, Base
 from src.libs.responses import NovelError
+from src.libs.utils import parse_last_path
 
 __all__ = (
+    "Platform",
     "NovelDTO",
     "NovelCreate",
 )
@@ -55,6 +58,20 @@ class NovelCreate(Base):
     id: Annotated[str | None, Field(description="소설 ID")] = None
     url: Annotated[HttpUrl | None, Field(description="소설 URL")] = None
     platform: Annotated[Platform, Field(description="소설 플랫폼")]
+
+    @model_validator(mode="after")
+    @classmethod
+    def parse_novel_id(cls, data: "NovelCreate"):
+        """소설 아이디를 가져옵니다."""
+        if data.id:
+            return data
+
+        if not data.url:
+            raise NovelError.NEED_NOVEL_REF.http_exception
+
+        if data.platform == Platform.RIDI:
+            data.id = parse_last_path(str(data.url), is_digit=True)
+        return data
 
     @classmethod
     @property

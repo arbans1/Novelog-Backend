@@ -1,5 +1,6 @@
 """유틸리티 함수들을 정의합니다."""
 from typing import Any, Iterable
+from urllib.parse import urlparse
 
 
 def merge_dictionaries(*dicts_to_merge: dict[str, Any]) -> dict[str, Any]:
@@ -55,3 +56,30 @@ def merge_values(existing_value: Any, new_value: Any) -> Any:
     ):
         return type(new_value)(existing_value) + type(new_value)(new_value)
     return new_value
+
+
+def parse_last_path(url: str, is_digit: bool = False) -> str | None:
+    """주어진 URL에서 마지막 경로를 추출합니다.
+
+    Args:
+        url (str): 분석할 URL.
+        is_digit (bool): 마지막 경로가 숫자인지 확인할지 여부. 기본값은 True입니다.
+
+    Returns:
+        str | None: 추출된 경로, 숫자여야 하는데 아닌 경우는 None.
+
+    예시:
+        >>> parse_last_path("https://ridibooks.com/books/5211000001?_rdt_sid=fantasy_webnovel_reading_book&_rdt_idx=0")
+        '5211000001'
+    """
+    parsed = urlparse(url)
+
+    # 경로의 마지막 부분을 추출
+    path_parts = parsed.path.split("/")
+    if path_parts:
+        last_part = path_parts[-1]
+        if is_digit and not last_part.isdigit():
+            return None
+        return last_part
+
+    return None
