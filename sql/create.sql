@@ -29,6 +29,7 @@ CREATE TABLE novels (
     description TEXT,
     author VARCHAR(255),
     published_at TIMESTAMP WITH TIME ZONE,
+    last_updated_at TIMESTAMP WITH TIME ZONE,
     category VARCHAR(20) NOT NULL,
     ridi_id VARCHAR(20) UNIQUE,
     kakao_id VARCHAR(20) UNIQUE,
@@ -47,6 +48,7 @@ COMMENT ON COLUMN novels.title IS '제목';
 COMMENT ON COLUMN novels.author IS '작가';
 COMMENT ON COLUMN novels.description IS '설명';
 COMMENT ON COLUMN novels.published_at IS '공개일';
+COMMENT ON COLUMN novels.last_updated_at IS '최종 업데이트일';
 COMMENT ON COLUMN novels.category IS '카테고리';
 COMMENT ON COLUMN novels.ridi_id IS '리디북스 아이디';
 COMMENT ON COLUMN novels.kakao_id IS '카카오 페이지 아이디';

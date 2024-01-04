@@ -27,6 +27,7 @@ class NovelDTO(DTO):
     author: Annotated[str, Field(description="작가")]
     description: Annotated[str, Field(description="설명")] = ""
     published_at: Annotated[datetime, Field(description="공개일")]
+    last_updated_at: Annotated[datetime, Field(description="최종 업데이트일")]
     category: Annotated[str, Field(description="카테고리")]
     image_url: Annotated[HttpUrl, Field(description="이미지 URL")] = ""
     ridi_url: Annotated[HttpUrl | None, Field(description="리디북스 URL")] = None
@@ -78,3 +79,12 @@ class NovelCreate(Base):
     def errors(cls) -> tuple:
         """에러 메시지"""
         return (NovelError.NEED_NOVEL_REF,)
+
+
+class NovelOrder(str, Enum):
+    """소설 정렬"""
+
+    TITLE = "title"
+    AUTHOR = "author"
+    PUBLISHED_AT = "published_at"
+    LAST_UPDATED_AT = "last_updated_at"

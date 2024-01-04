@@ -15,6 +15,7 @@ class Novel(Base):
     description: Mapped[str] = mapped_column(TEXT, comment="설명")
     author: Mapped[str] = mapped_column(VARCHAR(255), comment="작가")
     published_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), comment="공개일")
+    last_updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), comment="최종 업데이트일")
     category: Mapped[str] = mapped_column(VARCHAR(20), nullable=False, comment="카테고리")
     ridi_id: Mapped[str] = mapped_column(VARCHAR(20), unique=True, comment="리디북스 아이디")
     kakao_id: Mapped[str] = mapped_column(VARCHAR(20), unique=True, comment="카카오 페이지 아이디")
