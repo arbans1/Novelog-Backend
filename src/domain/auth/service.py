@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.config import settings
 from src.core.security import create_jwt_token, decode_jwt_token, verify_password
 from src.domain.auth.schemas import TokenDTO, TokenPayload
-from src.domain.user.crud import CRUDUser
+from src.domain.users.crud import CRUDUser
 from src.libs.responses import UserError
 
 

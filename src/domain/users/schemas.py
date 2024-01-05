@@ -4,7 +4,7 @@ from pydantic import BeforeValidator, EmailStr, Field
 from typing_extensions import Annotated
 
 from src.domain.base.schemas import DTO, Base
-from src.domain.user.validators import NickNameValidator, PasswordValidator
+from src.domain.users.validators import NickNameValidator, PasswordValidator
 
 __all__ = (
     "UserDTO",

@@ -4,9 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.security import get_password_hash
 from src.domain.base.service import to_dto
-from src.domain.user.crud import CRUDUser
-from src.domain.user.models import User
-from src.domain.user.schemas import UserCreate, UserDTO
+from src.domain.users.crud import CRUDUser
+from src.domain.users.models import User
+from src.domain.users.schemas import UserCreate, UserDTO
 from src.libs.responses import UserError
 
 __all__ = ("UserService",)

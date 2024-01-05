@@ -11,3 +11,62 @@ users: {
   deleted_at: timestamp # 삭제일
 }
 
+novels: {
+  shape: sql_table
+  id: int {constraint: primary_key} # 아이디
+  title: varchar(255) # 제목
+  author: varchar(255) # 작가
+  description: text # 설명
+  published_at: timestamp # 공개일
+  last_updated_at: timestamp # 최종 업데이트일
+  category: varchar(20) # 카테고리
+  ridi_id: varchar(20) # 리디북스 아이디
+  kakao_id: varchar(20) # 카카오 페이지 아이디
+  series_id: varchar(20) # 시리즈 아이디
+  munpia_id: varchar(20) # 문피아 아이디
+  image_url: varchar(255) # 이미지 URL
+  created_at: timestamp # 생성일
+  updated_at: timestamp # 수정일
+}
+
+chapters: {
+  shape: sql_table
+  id: int {constraint: primary_key} # 아이디
+  novel_id: int {constraint: foreign_key} # 소설 아이디
+  chapter_no: int # 챕터 번호
+  title: varchar(255) # 제목
+  published_at: timestamp # 공개일
+  ridi_id: varchar(20) # 리디북스 아이디
+  kakao_id: varchar(20) # 카카오 페이지 아이디
+  series_id: varchar(20) # 시리즈 아이디
+  munpia_id: varchar(20) # 문피아 아이디
+  created_at: timestamp # 생성일
+  updated_at: timestamp # 수정일
+}
+novels.id -> chapters.novel_id
+
+novel_memos: {
+  shape: sql_table
+  novel_id: int {constraint: foreign_key} # 소설 아이디
+  user_id: int {constraint: foreign_key} # 유저 아이디
+  content: text # 내용
+  average_star: float # 평균 별점
+  is_favorite: boolean # 즐겨찾기 여부
+  created_at: timestamp # 생성일
+  updated_at: timestamp # 수정일
+  content_updated_at: timestamp # 내용 수정일
+}
+novels.id -> novel_memos.novel_id
+users.id -> novel_memos.user_id
+
+chapter_memos: {
+  shape: sql_table
+  chapter_id: int {constraint: foreign_key} # 챕터 아이디
+  user_id: int {constraint: foreign_key} # 유저 아이디
+  content: text # 내용
+  star: int # 별점
+  created_at: timestamp # 생성일
+  updated_at: timestamp # 수정일
+}
+chapters.id -> chapter_memos.chapter_id
+users.id -> chapter_memos.user_id

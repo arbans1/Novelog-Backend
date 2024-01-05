@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import TIMESTAMP, VARCHAR, Boolean
+from sqlalchemy import INTEGER, TIMESTAMP, VARCHAR, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.domain.base.models import Base
@@ -13,6 +13,7 @@ class User(Base):
 
     __tablename__ = "users"
 
+    id: Mapped[int] = mapped_column(primary_key=True, type_=INTEGER, autoincrement=True, comment="ID")
     email: Mapped[str] = mapped_column("login_id", nullable=False, unique=True, comment="이메일", type_=VARCHAR(255))
     hashed_password: Mapped[str] = mapped_column(nullable=False, comment="해시된 비밀번호", type_=VARCHAR(72))
     nickname: Mapped[str] = mapped_column(nullable=False, comment="닉네임", type_=VARCHAR(255))
