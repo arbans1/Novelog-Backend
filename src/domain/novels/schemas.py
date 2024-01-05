@@ -14,7 +14,19 @@ __all__ = (
     "Platform",
     "NovelDTO",
     "NovelCreate",
+    "NovelOrder",
+    "NovelsRequest",
+    "NovelsDTO",
 )
+
+
+class StrEnum(str, Enum):
+    """문자열 Enum"""
+
+    def __str__(self) -> str:
+        """문자열로 변환합니다."""
+
+        return self.value
 
 
 class NovelDTO(DTO):
@@ -39,12 +51,12 @@ class NovelDTO(DTO):
     @classmethod
     def id_to_url(cls, data):
         """소설 ID를 URL로 변환"""
-        if data.get("ridi_id"):
-            data["ridi_url"] = f"https://ridibooks.com/books/{data['ridi_id']}"
+        if getattr(data, "ridi_id"):
+            setattr(data, "ridi_url", f"https://ridibooks.com/books/{getattr(data, 'ridi_id')}")
         return data
 
 
-class Platform(Enum):
+class Platform(StrEnum):
     """소설 플랫폼"""
 
     RIDI = "ridi"
@@ -81,10 +93,48 @@ class NovelCreate(Base):
         return (NovelError.NEED_NOVEL_REF,)
 
 
-class NovelOrder(str, Enum):
+class NovelOrder(StrEnum):
     """소설 정렬"""
 
     TITLE = "title"
     AUTHOR = "author"
     PUBLISHED_AT = "published_at"
     LAST_UPDATED_AT = "last_updated_at"
+
+
+class NovelFilter(StrEnum):
+    """소설 필터"""
+
+    ALL = "all"
+    TITLE = "title"
+    AUTHOR = "author"
+    DESCRIPTION = "description"
+
+
+class NovelCategoryFilter(StrEnum):
+    """소설 카테고리 필터"""
+
+    ALL = "all"
+    FANTASY = "fantasy"
+    MODERN_FANTASY = "modern_fantasy"
+    WUXIA = "wuxia"
+    ROMANCE = "romance"
+    ROMANCE_FANTASY = "romance_fantasy"
+
+
+class NovelsRequest(Base):
+    """소설 목록 요청"""
+
+    skip: Annotated[int, Field(description="건너뛸 개수", ge=0)] = 0
+    limit: Annotated[int | None, Field(description="최대 개수", ge=0, le=100)] = 10
+    query: Annotated[str | None, Field(description="검색어")] = None
+    filter_by: Annotated[NovelFilter, Field(description="필터 기준")] = NovelFilter.ALL
+    category: Annotated[NovelCategoryFilter, Field(description="카테고리 필터")] = NovelCategoryFilter.ALL
+    order_by: Annotated[NovelOrder, Field(description="정렬 기준")] = NovelOrder.LAST_UPDATED_AT
+    desc: Annotated[bool, Field(description="내림차순 여부")] = True
+
+
+class NovelsDTO(DTO):
+    """소설 목록 DTO"""
+
+    items: Annotated[list[NovelDTO], Field(description="소설 목록")]
