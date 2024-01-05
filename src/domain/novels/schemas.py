@@ -138,3 +138,25 @@ class NovelsDTO(DTO):
     """소설 목록 DTO"""
 
     items: Annotated[list[NovelDTO], Field(description="소설 목록")]
+
+
+class NovelMemoDTO(DTO):
+    """소설 메모 DTO"""
+
+    content: Annotated[str | None, Field(description="내용")] = None
+    average_star: Annotated[float | None, Field(description="평균 별점")] = None
+    is_favorite: Annotated[bool, Field(description="즐겨찾기 여부")] = False
+    modified_at: Annotated[datetime | None, Field(description="내용 수정일")] = None
+
+
+class NovelMemoContent(Base):
+    """소설 메모 내용"""
+
+    content: Annotated[str | None, Field(description="내용")] = None
+
+
+class NovelMemoCreate(NovelMemoContent):
+    """소설 메모 생성"""
+
+    novel_id: Annotated[int, Field(description="소설 ID")]
+    user_id: Annotated[int, Field(description="사용자 ID")]

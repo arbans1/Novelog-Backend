@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.config import settings
 from src.domain.base.service import to_dto
 from src.domain.novels.crud import CRUDNovel
-from src.domain.novels.models import Novel
-from src.domain.novels.schemas import NovelCreate, NovelDTO, NovelsDTO, NovelsRequest
+from src.domain.novels.models import Novel, NovelMemo
+from src.domain.novels.schemas import NovelCreate, NovelDTO, NovelMemoCreate, NovelMemoDTO, NovelsDTO, NovelsRequest
 from src.libs.responses import NovelError
 
 logger = logging.getLogger(__name__)
@@ -19,6 +19,12 @@ logger = logging.getLogger(__name__)
 def _(obj: Novel) -> NovelDTO:
     """Novel 객체를 NovelDTO 객체로 변환합니다."""
     return NovelDTO.model_validate(obj)
+
+
+@to_dto.register(NovelMemo)
+def _(obj: NovelMemo) -> NovelMemoDTO:
+    """NovelMemo 객체를 NovelMemoDTO 객체로 변환합니다."""
+    return NovelMemoDTO.model_validate(obj)
 
 
 class NovelService:
@@ -78,3 +84,61 @@ class NovelService:
         """소설 목록을 조회합니다."""
         items = await self.crud_novel.get_multi(**command.model_dump())
         return NovelsDTO(items=items)
+
+    async def get_memos(self, novel_id: int, user_id: int) -> NovelMemoDTO:
+        """소설 메모를 조회합니다."""
+        if not (item := await self.crud_novel.get_memo(novel_id, user_id)):
+            return NovelMemoDTO(novel_id=novel_id, user_id=user_id)
+        return to_dto(item)
+
+    async def create_memo(self, command: NovelMemoCreate) -> NovelMemoDTO:
+        """소설 메모를 생성합니다."""
+        # Dependency
+        await self.get(command.novel_id)
+        if await self.crud_novel.get_memo(command.novel_id, command.user_id, content_existed=False):
+            raise NovelError.NOVEL_MEMO_ALREADY_EXISTS.http_exception
+
+        item = await self.crud_novel.create_memo(**command.model_dump())
+        return to_dto(item)
+
+    async def update_memo(self, command: NovelMemoCreate) -> NovelMemoDTO:
+        """소설 메모를 수정합니다."""
+        # Dependency
+        await self.get(command.novel_id)
+        item = await self.crud_novel.create_memo(**command.model_dump())
+        return to_dto(item)
+
+    async def delete_memo(self, novel_id: int, user_id: int) -> NovelMemoDTO:
+        """소설 메모를 삭제합니다."""
+        # Dependency
+        await self.get(novel_id)
+        if memo := await self.crud_novel.delete_memo(novel_id, user_id):
+            return to_dto(memo)
+        return NovelMemoDTO(novel_id=novel_id, user_id=user_id)
+
+    @classmethod
+    @property
+    def create_memo_errors(cls) -> tuple:
+        """에러 메시지"""
+        return cls.get_errors + (NovelError.NOVEL_MEMO_ALREADY_EXISTS,)
+
+    @classmethod
+    @property
+    def update_memo_errors(cls) -> tuple:
+        """에러 메시지"""
+        return cls.get_errors
+
+    async def mark_as_favorite(self, novel_id: int, user_id: int) -> NovelMemoDTO:
+        """소설을 즐겨찾기에 추가합니다."""
+        # Dependency
+        await self.get(novel_id)
+        item = await self.crud_novel.mark_as_favorite(novel_id, user_id)
+        return to_dto(item)
+
+    async def unmark_as_favorite(self, novel_id: int, user_id: int) -> NovelMemoDTO:
+        """소설을 즐겨찾기에서 제거합니다."""
+        # Dependency
+        await self.get(novel_id)
+        if item := await self.crud_novel.unmark_as_favorite(novel_id, user_id):
+            return to_dto(item)
+        return NovelMemoDTO(novel_id=novel_id, user_id=user_id)

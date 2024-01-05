@@ -5,7 +5,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing_extensions import Annotated
 
 from src.api import deps
-from src.domain.novels.schemas import NovelCreate, NovelDTO, NovelsDTO, NovelsRequest
+from src.domain.auth.schemas import TokenPayload
+from src.domain.novels.schemas import (
+    NovelCreate,
+    NovelDTO,
+    NovelMemoContent,
+    NovelMemoCreate,
+    NovelMemoDTO,
+    NovelsDTO,
+    NovelsRequest,
+)
 from src.domain.novels.service import NovelService
 from src.libs.responses import UserError, get_error_response
 
@@ -57,8 +66,119 @@ async def get_novel_list(
 )
 async def get_novel(
     novel_service: Annotated[NovelService, Depends(get_novel_service)],
-    *,
     novel_id: Annotated[int, Path(description="소설 ID")],
 ) -> NovelDTO:
     """특정 소설을 조회합니다."""
     return await novel_service.get(novel_id)
+
+
+# | 내용 | 유형 | 엔드포인트 | 권한 | 설명 | 상태 |
+# | --- | --- | --- | --- | --- | --- |
+# | 소설 등록 | POST | /api/v1/novels | 모든 사용자 | 플랫폼의 소설 id / url을 이용하여 소설을 등록합니다. | 완료 |
+# | 모든 소설 조회 | GET | /api/v1/novels | 모든 사용자 | 모든 소설을 조회합니다. | 완료 |
+# | 특정 소설 조회 | GET | /api/v1/novels/{novel_id} | 모든 사용자 | 특정 소설을 조회합니다. | 완료 |
+# | 특정 소설 메모 등록 | POST | /api/v1/novels/{novel_id}/memo | 특정 사용자 | 특정 소설에 메모 및 별점, 상태 등을 등록합니다. | 시작 전 |
+# | 특정 소설 메모 수정 | PATCH | /api/v1/novels/{novel_id}/memo | 특정 사용자 | 특정 소설에 등록된 메모 및 별점, 상태 등을 수정합니다. | 시작 전 |
+# | 특정 소설 메모 삭제 | DELETE | /api/v1/novels/{novel_id}/memo | 특정 사용자 | 특정 소설에 등록된 메모 및 별점, 상태 등을 삭제합니다. | 시작 전 |
+# | 특정 소설 즐겨찾기 추가 | POST | /api/v1/novels/{novel_id}/favorites | 특정 사용자 | 특정 소설을 즐겨찾기로 추가합니다. | 시작 전 |
+# | 특정 소설 즐겨찾기 삭제 | DELETE | /api/v1/novels/{novel_id}/favorites | 특정 사용자 | 특정 소설을 즐겨찾기에서 제거합니다. | 시작 전 |
+
+
+@router.get(
+    "/{novel_id}/memo",
+    response_model=NovelMemoDTO,
+    summary="특정 소설의 메모를 조회합니다.",
+    responses=get_error_response(UserError.CREDENTIALS_EXCEPTION),
+)
+async def get_novel_memo(
+    novel_service: Annotated[NovelService, Depends(get_novel_service)],
+    novel_id: Annotated[int, Path(description="소설 ID")],
+    token: Annotated[TokenPayload, Depends(deps.get_token_payload)],
+) -> NovelMemoDTO:
+    """특정 소설의 메모를 조회합니다."""
+    return await novel_service.get_memos(novel_id, token.id)
+
+
+@router.post(
+    "/{novel_id}/memo",
+    response_model=NovelMemoDTO,
+    status_code=status.HTTP_201_CREATED,
+    summary="특정 소설에 메모를 등록합니다.",
+    responses=get_error_response(NovelService.create_memo_errors, UserError.CREDENTIALS_EXCEPTION),
+)
+async def create_novel_memo(
+    novel_service: Annotated[NovelService, Depends(get_novel_service)],
+    novel_id: Annotated[int, Path(description="소설 ID")],
+    token: Annotated[TokenPayload, Depends(deps.get_token_payload)],
+    *,
+    content: Annotated[NovelMemoContent, Body(...)],
+) -> NovelMemoDTO:
+    """특정 소설에 메모를 등록합니다."""
+    novel_memo_create = NovelMemoCreate(novel_id=novel_id, user_id=token.id, content=content.content)
+    return await novel_service.create_memo(novel_memo_create)
+
+
+@router.patch(
+    "/{novel_id}/memo",
+    response_model=NovelMemoDTO,
+    summary="특정 소설의 메모를 수정합니다.",
+    responses=get_error_response(NovelService.update_memo_errors, UserError.CREDENTIALS_EXCEPTION),
+)
+async def update_novel_memo(
+    novel_service: Annotated[NovelService, Depends(get_novel_service)],
+    novel_id: Annotated[int, Path(description="소설 ID")],
+    token: Annotated[TokenPayload, Depends(deps.get_token_payload)],
+    *,
+    content: Annotated[NovelMemoContent, Body(...)],
+) -> NovelMemoDTO:
+    """특정 소설의 메모를 수정합니다."""
+    novel_memo_create = NovelMemoCreate(novel_id=novel_id, user_id=token.id, content=content.content)
+    return await novel_service.update_memo(novel_memo_create)
+
+
+@router.delete(
+    "/{novel_id}/memo",
+    response_model=NovelMemoDTO,
+    status_code=status.HTTP_200_OK,
+    summary="특정 소설의 메모를 삭제합니다.",
+    responses=get_error_response(NovelService.update_memo_errors, UserError.CREDENTIALS_EXCEPTION),
+)
+async def delete_novel_memo(
+    novel_service: Annotated[NovelService, Depends(get_novel_service)],
+    novel_id: Annotated[int, Path(description="소설 ID")],
+    token: Annotated[TokenPayload, Depends(deps.get_token_payload)],
+) -> NovelMemoDTO:
+    """특정 소설의 메모를 삭제합니다."""
+    return await novel_service.delete_memo(novel_id, token.id)
+
+
+@router.post(
+    "/{novel_id}/favorites",
+    response_model=NovelDTO,
+    status_code=status.HTTP_201_CREATED,
+    summary="특정 소설을 즐겨찾기에 추가합니다.",
+    responses=get_error_response(NovelService.update_memo_errors, UserError.CREDENTIALS_EXCEPTION),
+)
+async def mark_as_favorite(
+    novel_service: Annotated[NovelService, Depends(get_novel_service)],
+    novel_id: Annotated[int, Path(description="소설 ID")],
+    token: Annotated[TokenPayload, Depends(deps.get_token_payload)],
+) -> NovelDTO:
+    """특정 소설을 즐겨찾기에 추가합니다."""
+    return await novel_service.mark_as_favorite(novel_id, token.id)
+
+
+@router.delete(
+    "/{novel_id}/favorites",
+    response_model=NovelDTO,
+    status_code=status.HTTP_200_OK,
+    summary="특정 소설을 즐겨찾기에서 제거합니다.",
+    responses=get_error_response(NovelService.update_memo_errors, UserError.CREDENTIALS_EXCEPTION),
+)
+async def unmark_as_favorite(
+    novel_service: Annotated[NovelService, Depends(get_novel_service)],
+    novel_id: Annotated[int, Path(description="소설 ID")],
+    token: Annotated[TokenPayload, Depends(deps.get_token_payload)],
+) -> NovelDTO:
+    """특정 소설을 즐겨찾기에서 제거합니다."""
+    return await novel_service.unmark_as_favorite(novel_id, token.id)

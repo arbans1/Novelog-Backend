@@ -91,38 +91,40 @@ COMMENT ON COLUMN chapters.updated_at IS '수정일';
 
 -- Novel Memos Table
 CREATE TABLE novel_memos (
-    id SERIAL PRIMARY KEY,
     novel_id INT NOT NULL REFERENCES novels(id),
     user_id INT NOT NULL REFERENCES users(id),
     content TEXT,
     average_star FLOAT,
     is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    content_updated_at TIMESTAMP WITH TIME ZONE,
+    PRIMARY KEY (novel_id, user_id)
 );
 
 COMMENT ON TABLE novel_memos IS '소설 메모';
-COMMENT ON COLUMN novel_memos.id IS '아이디 (기본 키)';
 COMMENT ON COLUMN novel_memos.novel_id IS '소설 아이디 (외래 키)';
 COMMENT ON COLUMN novel_memos.user_id IS '사용자 아이디 (외래 키)';
 COMMENT ON COLUMN novel_memos.content IS '내용';
 COMMENT ON COLUMN novel_memos.average_star IS '평균 별점';
 COMMENT ON COLUMN novel_memos.created_at IS '생성일';
 COMMENT ON COLUMN novel_memos.updated_at IS '수정일';
+COMMENT ON COLUMN novel_memos.content_updated_at IS '내용 수정일';
+
 
 -- Chapter Memos Table
 CREATE TABLE chapter_memos (
-    id SERIAL PRIMARY KEY,
     chapter_id INT NOT NULL REFERENCES chapters(id),
     user_id INT NOT NULL REFERENCES users(id),
     content TEXT,
     star INT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (chapter_id, user_id)
 );
 
+
 COMMENT ON TABLE chapter_memos IS '챕터 메모';
-COMMENT ON COLUMN chapter_memos.id IS '아이디 (기본 키)';
 COMMENT ON COLUMN chapter_memos.chapter_id IS '챕터 아이디 (외래 키)';
 COMMENT ON COLUMN chapter_memos.user_id IS '사용자 아이디 (외래 키)';
 COMMENT ON COLUMN chapter_memos.content IS '내용';

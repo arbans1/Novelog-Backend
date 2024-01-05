@@ -1,10 +1,12 @@
 """소설 CRUD 관련 모듈입니다."""
 # pylint: disable=redefined-builtin,too-many-arguments
+from datetime import datetime, timezone
+
 from sqlalchemy import or_, select
 from typing_extensions import Sequence
 
 from src.domain.base.crud import CRUD
-from src.domain.novels.models import Novel, NovelCategory
+from src.domain.novels.models import Novel, NovelCategory, NovelMemo
 from src.domain.novels.schemas import NovelCategoryFilter, NovelFilter, NovelOrder, Platform
 
 
@@ -111,3 +113,128 @@ class CRUDNovel(CRUD[Novel]):
             stmt = stmt.limit(limit)
 
         return (await self.db.scalars(stmt)).all()
+
+    async def get_memo(
+        self,
+        novel_id: int,
+        user_id: int,
+        content_existed: bool = False,
+    ) -> NovelMemo | None:
+        """소설 메모를 조회합니다.
+
+        Args:
+            novel_id (int): 소설의 id입니다.
+            user_id (int): 사용자의 id입니다.
+            content_existed (bool, optional): 메모 내용이 있는지 여부입니다. Defaults to False.
+
+        Returns:
+            NovelMemo|None: 소설 메모 객체입니다.
+        """
+        stmt = select(NovelMemo).where(NovelMemo.novel_id == novel_id).where(NovelMemo.user_id == user_id)
+        if content_existed:
+            stmt = stmt.where(NovelMemo.content.is_not(None))
+        return (await self.db.scalars(stmt)).first()
+
+    async def create_memo(
+        self,
+        novel_id: int,
+        user_id: int,
+        content: str,
+    ) -> NovelMemo:
+        """소설 메모를 생성합니다.
+
+        Args:
+            novel_id (int): 소설의 id입니다.
+            user_id (int): 사용자의 id입니다.
+            content (str): 메모 내용입니다.
+
+        Returns:
+            NovelMemo: 소설 메모 객체입니다.
+        """
+        if not (novel_memo := await self.get_memo(novel_id, user_id)):
+            novel_memo = NovelMemo(novel_id=novel_id, user_id=user_id)
+        novel_memo.content = content
+        novel_memo.modified_at = datetime.utcnow().replace(tzinfo=timezone.utc)
+        self.db.add(novel_memo)
+        await self.db.flush()
+        await self.db.refresh(novel_memo)
+        return novel_memo
+
+    async def delete_memo(
+        self,
+        novel_id: int,
+        user_id: int,
+    ) -> NovelMemo:
+        """소설 메모를 삭제합니다.
+
+        Args:
+            novel_id (int): 소설의 id입니다.
+            user_id (int): 사용자의 id입니다.
+
+        Returns:
+            NovelMemo: 소설 메모 객체입니다.
+        """
+        stmt = select(NovelMemo).where(NovelMemo.novel_id == novel_id, NovelMemo.user_id == user_id)
+        novel_memo = (await self.db.scalars(stmt)).first()
+        if not novel_memo:
+            return
+        novel_memo.content = None
+        novel_memo.modified_at = None
+        if not (novel_memo.content and novel_memo.average_star and novel_memo.is_favorite):
+            await self.db.delete(novel_memo)
+        else:
+            self.db.add(novel_memo)
+            await self.db.flush()
+            await self.db.refresh(novel_memo)
+        return novel_memo
+
+    async def mark_as_favorite(
+        self,
+        novel_id: int,
+        user_id: int,
+    ) -> NovelMemo:
+        """소설 메모를 즐겨찾기합니다.
+
+        Args:
+            novel_id (int): 소설의 id입니다.
+            user_id (int): 사용자의 id입니다.
+
+        Returns:
+            NovelMemo: 소설 메모 객체입니다.
+        """
+        stmt = select(NovelMemo).where(NovelMemo.novel_id == novel_id, NovelMemo.user_id == user_id)
+        novel_memo = (await self.db.scalars(stmt)).first()
+        if not novel_memo:
+            novel_memo = NovelMemo(novel_id=novel_id, user_id=user_id)
+        novel_memo.is_favorite = True
+        self.db.add(novel_memo)
+        await self.db.flush()
+        await self.db.refresh(novel_memo)
+        return novel_memo
+
+    async def unmark_as_favorite(
+        self,
+        novel_id: int,
+        user_id: int,
+    ) -> NovelMemo:
+        """소설 메모를 즐겨찾기 해제합니다.
+
+        Args:
+            novel_id (int): 소설의 id입니다.
+            user_id (int): 사용자의 id입니다.
+
+        Returns:
+            NovelMemo: 소설 메모 객체입니다.
+        """
+        stmt = select(NovelMemo).where(NovelMemo.novel_id == novel_id, NovelMemo.user_id == user_id)
+        novel_memo = (await self.db.scalars(stmt)).first()
+        if not novel_memo:
+            return
+        novel_memo.is_favorite = False
+        if not (novel_memo.content and novel_memo.average_star and novel_memo.is_favorite):
+            await self.db.delete(novel_memo)
+        else:
+            self.db.add(novel_memo)
+            await self.db.flush()
+            await self.db.refresh(novel_memo)
+        return novel_memo

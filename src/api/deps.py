@@ -22,6 +22,6 @@ async def get_db() -> AsyncSession:
 
 async def get_token_payload(
     token: Annotated[str, Depends(oauth2_scheme)],
-) -> dict:
+) -> TokenPayload:
     """토큰의 payload를 반환합니다."""
     return TokenPayload(**decode_jwt_token(token))
