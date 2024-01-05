@@ -6,8 +6,13 @@ from sqlalchemy import or_, select
 from typing_extensions import Sequence
 
 from src.domain.base.crud import CRUD
-from src.domain.novels.models import Novel, NovelCategory, NovelMemo
-from src.domain.novels.schemas import NovelCategoryFilter, NovelFilter, NovelOrder, Platform
+from src.domain.novels.models import Chapter, ChapterMemo, Novel, NovelCategory, NovelMemo
+from src.domain.novels.schemas import ChapterOrder, NovelCategoryFilter, NovelFilter, NovelOrder, Platform
+
+__all__ = (
+    "CRUDNovel",
+    "CRUDChapter",
+)
 
 
 class CRUDNovel(CRUD[Novel]):
@@ -238,3 +243,126 @@ class CRUDNovel(CRUD[Novel]):
             await self.db.flush()
             await self.db.refresh(novel_memo)
         return novel_memo
+
+
+class CRUDChapter(CRUD[Chapter]):
+    """소설 챕터 CRUD 클래스"""
+
+    _order_columns = {
+        ChapterOrder.CHAPTER_NO: Chapter.chapter_no,
+    }
+
+    async def get(
+        self,
+        id: int,
+    ) -> Chapter | None:
+        """소설 챕터를 조회합니다.
+
+        Args:
+            id (int): 소설 챕터의 id입니다.
+
+        Returns:
+            Chapter|None: 소설 챕터 객체입니다.
+        """
+        stmt = select(Chapter).where(Chapter.id == id)
+        return (await self.db.scalars(stmt)).first()
+
+    async def get_multi(
+        self,
+        novel_id: int,
+        *,
+        skip: int = 0,
+        limit: int | None = None,
+        order_by: ChapterOrder = ChapterOrder.CHAPTER_NO,
+        desc: bool = True,
+    ) -> Sequence[Chapter]:
+        """소설 챕터 목록을 조회합니다.
+
+        Args:
+            novel_id (int): 소설의 id입니다.
+            skip (int): 건너뛸 개수입니다. Defaults to 0.
+            limit (int, optional): 최대 개수입니다. Defaults to None.
+            order_by (ChapterOrder): 정렬 기준입니다. Defaults to ChapterOrder.CHAPTER_NO.
+            desc (bool): 내림차순 여부입니다. Defaults to True.
+
+        Returns:
+            Sequence[Chapter]: 소설 챕터 목록입니다.
+        """
+        stmt = select(Chapter).where(Chapter.novel_id == novel_id)
+
+        order_column = self._order_columns.get(order_by, Chapter.chapter_no)
+        stmt = stmt.order_by(order_column.desc() if desc else order_column).offset(skip)
+
+        if limit:
+            stmt = stmt.limit(limit)
+
+        return (await self.db.scalars(stmt)).all()
+
+    async def get_memo(
+        self,
+        chapter_id: int,
+        user_id: int,
+    ) -> ChapterMemo | None:
+        """챕터 메모를 조회합니다.
+
+        Args:
+            chapter_id (int): 챕터의 id입니다.
+            user_id (int): 사용자의 id입니다.
+
+        Returns:
+            ChapterMemo|None: 챕터 메모 객체입니다.
+        """
+        stmt = select(ChapterMemo).where(ChapterMemo.chapter_id == chapter_id).where(ChapterMemo.user_id == user_id)
+        return (await self.db.scalars(stmt)).first()
+
+    async def create_memo(
+        self,
+        chapter_id: int,
+        user_id: int,
+        content: str | None = None,
+        star: int | None = None,
+    ) -> ChapterMemo:
+        """챕터 메모를 생성합니다.
+
+        Args:
+            chapter_id (int): 챕터의 id입니다.
+            user_id (int): 사용자의 id입니다.
+            content (str, optional): 메모 내용입니다. Defaults to None.
+            star (int, optional): 별점입니다. Defaults to None.
+
+        Returns:
+            ChapterMemo: 챕터 메모 객체입니다.
+        """
+        if not (chapter_memo := await self.get_memo(chapter_id, user_id)):
+            chapter_memo = ChapterMemo(chapter_id=chapter_id, user_id=user_id)
+        if content is not None:
+            chapter_memo.content = content
+        if star is not None:
+            chapter_memo.star = star
+
+        self.db.add(chapter_memo)
+        await self.db.flush()
+        await self.db.refresh(chapter_memo)
+        return chapter_memo
+
+    async def delete_memo(
+        self,
+        chapter_id: int,
+        user_id: int,
+    ) -> ChapterMemo:
+        """챕터 메모를 삭제합니다.
+
+        Args:
+            chapter_id (int): 챕터의 id입니다.
+            user_id (int): 사용자의 id입니다.
+
+        Returns:
+            ChapterMemo: 챕터 메모 객체입니다.
+        """
+        stmt = select(ChapterMemo).where(ChapterMemo.chapter_id == chapter_id, ChapterMemo.user_id == user_id)
+
+        if not (chapter_memo := (await self.db.scalars(stmt)).first()):
+            return
+        await self.db.delete(chapter_memo)
+
+        return chapter_memo

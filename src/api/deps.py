@@ -3,7 +3,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing_extensions import Annotated
 
-from src.core.security import decode_jwt_token, oauth2_scheme
+from src.core.security import decode_jwt_token, oauth2_scheme, oauth2_scheme_optional
 from src.db import AsyncSessionLocal
 from src.domain.auth.schemas import TokenPayload
 
@@ -25,3 +25,12 @@ async def get_token_payload(
 ) -> TokenPayload:
     """토큰의 payload를 반환합니다."""
     return TokenPayload(**decode_jwt_token(token))
+
+
+async def get_token_payload_optional(
+    token: Annotated[str | None, Depends(oauth2_scheme_optional)],
+) -> TokenPayload | None:
+    """토큰의 payload를 반환합니다."""
+    if token:
+        return TokenPayload(**decode_jwt_token(token))
+    return None

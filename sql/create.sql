@@ -58,6 +58,30 @@ COMMENT ON COLUMN novels.image_url IS '이미지 URL';
 COMMENT ON COLUMN novels.created_at IS '생성일';
 COMMENT ON COLUMN novels.updated_at IS '수정일';
 
+-- Novel Memos Table
+CREATE TABLE novel_memos (
+    novel_id INT NOT NULL REFERENCES novels(id),
+    user_id INT NOT NULL REFERENCES users(id),
+    content TEXT,
+    average_star FLOAT,
+    is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    content_updated_at TIMESTAMP WITH TIME ZONE,
+    PRIMARY KEY (novel_id, user_id)
+);
+
+CREATE INDEX novel_memos_user_id_idx ON novel_memos(user_id);
+
+COMMENT ON TABLE novel_memos IS '소설 메모';
+COMMENT ON COLUMN novel_memos.novel_id IS '소설 아이디 (외래 키)';
+COMMENT ON COLUMN novel_memos.user_id IS '사용자 아이디 (외래 키)';
+COMMENT ON COLUMN novel_memos.content IS '내용';
+COMMENT ON COLUMN novel_memos.average_star IS '평균 별점';
+COMMENT ON COLUMN novel_memos.created_at IS '생성일';
+COMMENT ON COLUMN novel_memos.updated_at IS '수정일';
+COMMENT ON COLUMN novel_memos.content_updated_at IS '내용 수정일';
+
 
 -- Chapter Table
 CREATE TABLE chapters (
@@ -75,6 +99,7 @@ CREATE TABLE chapters (
 );
 
 CREATE INDEX chapters_novel_id_chapter_no_idx ON chapters(novel_id, chapter_no DESC);
+CREATE INDEX chapters_chapter_no_idx ON chapters(chapter_no DESC);
 
 COMMENT ON TABLE chapters IS '챕터';
 COMMENT ON COLUMN chapters.id IS '아이디 (기본 키)';
@@ -89,28 +114,6 @@ COMMENT ON COLUMN chapters.munpia_id IS '문피아 아이디';
 COMMENT ON COLUMN chapters.created_at IS '생성일';
 COMMENT ON COLUMN chapters.updated_at IS '수정일';
 
--- Novel Memos Table
-CREATE TABLE novel_memos (
-    novel_id INT NOT NULL REFERENCES novels(id),
-    user_id INT NOT NULL REFERENCES users(id),
-    content TEXT,
-    average_star FLOAT,
-    is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    content_updated_at TIMESTAMP WITH TIME ZONE,
-    PRIMARY KEY (novel_id, user_id)
-);
-
-COMMENT ON TABLE novel_memos IS '소설 메모';
-COMMENT ON COLUMN novel_memos.novel_id IS '소설 아이디 (외래 키)';
-COMMENT ON COLUMN novel_memos.user_id IS '사용자 아이디 (외래 키)';
-COMMENT ON COLUMN novel_memos.content IS '내용';
-COMMENT ON COLUMN novel_memos.average_star IS '평균 별점';
-COMMENT ON COLUMN novel_memos.created_at IS '생성일';
-COMMENT ON COLUMN novel_memos.updated_at IS '수정일';
-COMMENT ON COLUMN novel_memos.content_updated_at IS '내용 수정일';
-
 
 -- Chapter Memos Table
 CREATE TABLE chapter_memos (
@@ -123,6 +126,7 @@ CREATE TABLE chapter_memos (
     PRIMARY KEY (chapter_id, user_id)
 );
 
+CREATE INDEX chapter_memos_user_id_idx ON chapter_memos(user_id);
 
 COMMENT ON TABLE chapter_memos IS '챕터 메모';
 COMMENT ON COLUMN chapter_memos.chapter_id IS '챕터 아이디 (외래 키)';

@@ -7,9 +7,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
 from src.domain.base.service import to_dto
-from src.domain.novels.crud import CRUDNovel
-from src.domain.novels.models import Novel, NovelMemo
-from src.domain.novels.schemas import NovelCreate, NovelDTO, NovelMemoCreate, NovelMemoDTO, NovelsDTO, NovelsRequest
+from src.domain.novels.crud import CRUDChapter, CRUDNovel
+from src.domain.novels.models import Chapter, ChapterMemo, Novel, NovelMemo
+from src.domain.novels.schemas import (
+    ChapterDTO,
+    ChapterMemoCreate,
+    ChapterMemoUpdate,
+    ChaptersDTO,
+    ChaptersRequest,
+    NovelCreate,
+    NovelDTO,
+    NovelMemoCreate,
+    NovelMemoDTO,
+    NovelsDTO,
+    NovelsRequest,
+)
 from src.libs.responses import NovelError
 
 logger = logging.getLogger(__name__)
@@ -25,6 +37,12 @@ def _(obj: Novel) -> NovelDTO:
 def _(obj: NovelMemo) -> NovelMemoDTO:
     """NovelMemo 객체를 NovelMemoDTO 객체로 변환합니다."""
     return NovelMemoDTO.model_validate(obj)
+
+
+@to_dto.register(Chapter)
+def _(obj: Chapter) -> ChapterDTO:
+    """Chapter 객체를 ChapterDTO 객체로 변환합니다."""
+    return ChapterDTO.model_validate(obj)
 
 
 class NovelService:
@@ -85,7 +103,7 @@ class NovelService:
         items = await self.crud_novel.get_multi(**command.model_dump())
         return NovelsDTO(items=items)
 
-    async def get_memos(self, novel_id: int, user_id: int) -> NovelMemoDTO:
+    async def get_memo(self, novel_id: int, user_id: int) -> NovelMemoDTO:
         """소설 메모를 조회합니다."""
         if not (item := await self.crud_novel.get_memo(novel_id, user_id)):
             return NovelMemoDTO(novel_id=novel_id, user_id=user_id)
@@ -142,3 +160,69 @@ class NovelService:
         if item := await self.crud_novel.unmark_as_favorite(novel_id, user_id):
             return to_dto(item)
         return NovelMemoDTO(novel_id=novel_id, user_id=user_id)
+
+
+class ChapterService:
+    """소설 챕터 관련 서비스"""
+
+    def __init__(self, db: AsyncSession):
+        self.crud_chapter = CRUDChapter(db)
+
+    async def get(self, id: int) -> Chapter:
+        """소설 챕터를 조회합니다."""
+        item = await self.crud_chapter.get(id)
+        if not item:
+            raise NovelError.CHAPTER_NOT_FOUND.http_exception
+        return item
+
+    @classmethod
+    @property
+    def get_errors(cls) -> tuple:
+        """에러 메시지"""
+        return (NovelError.CHAPTER_NOT_FOUND,)
+
+    async def get_multi(self, novel_id: int, command: ChaptersRequest, user_id: int | None = None) -> ChaptersDTO:
+        """소설 챕터 목록을 조회합니다."""
+        items = await self.crud_chapter.get_multi(novel_id, **command.model_dump(), user_id=user_id)
+        return ChaptersDTO(items=items)
+
+    async def get_memo(self, chapter_id: int, user_id: int) -> ChapterMemo:
+        """소설 챕터 메모를 조회합니다."""
+        if not (item := await self.crud_chapter.get_memo(chapter_id, user_id)):
+            raise NovelError.CHAPTER_MEMO_NOT_FOUND.http_exception
+        return item
+
+    @classmethod
+    @property
+    def get_memo_errors(cls) -> tuple:
+        """에러 메시지"""
+        return (NovelError.CHAPTER_MEMO_NOT_FOUND,)
+
+    async def create_memo(self, command: ChapterMemoCreate) -> ChapterMemo:
+        """소설 챕터 메모를 생성합니다."""
+        # Dependency
+        await self.get(command.chapter_id)
+        if await self.crud_chapter.get_memo(command.chapter_id, command.user_id):
+            raise NovelError.CHAPTER_MEMO_ALREADY_EXISTS.http_exception
+
+        item = await self.crud_chapter.create_memo(**command.model_dump())
+        return item
+
+    @classmethod
+    @property
+    def create_memo_errors(cls) -> tuple:
+        """에러 메시지"""
+        return cls.get_errors + (NovelError.CHAPTER_MEMO_ALREADY_EXISTS,)
+
+    async def update_memo(self, command: ChapterMemoUpdate) -> ChapterMemo:
+        """소설 챕터 메모를 수정합니다."""
+        # Dependency
+        await self.get_memo(command.chapter_id, command.user_id)
+        item = await self.crud_chapter.create_memo(**command.model_dump())
+        return item
+
+    async def delete_memo(self, chapter_id: int, user_id: int) -> None:
+        """소설 챕터 메모를 삭제합니다."""
+        # Dependency
+        await self.get_memo(chapter_id, user_id)
+        await self.crud_chapter.delete_memo(chapter_id, user_id)

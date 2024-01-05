@@ -17,6 +17,20 @@ __all__ = (
     "NovelOrder",
     "NovelsRequest",
     "NovelsDTO",
+    "NovelFilter",
+    "NovelCategoryFilter",
+    "NovelMemoDTO",
+    "NovelMemoContent",
+    "NovelMemoCreate",
+    "ChapterOrder",
+    "ChaptersRequest",
+    "ChapterDTO",
+    "ChaptersDTO",
+    "ChapterMemoContent",
+    "ChapterMemoContentNull",
+    "ChapterMemoCreate",
+    "ChapterMemoUpdate",
+    "ChapterMemoDTO",
 )
 
 
@@ -160,3 +174,80 @@ class NovelMemoCreate(NovelMemoContent):
 
     novel_id: Annotated[int, Field(description="소설 ID")]
     user_id: Annotated[int, Field(description="사용자 ID")]
+
+
+class ChapterOrder(StrEnum):
+    """챕터 정렬"""
+
+    CHAPTER_NO = "chapter_no"
+
+
+class ChaptersRequest(Base):
+    """챕터 목록 요청"""
+
+    skip: Annotated[int, Field(description="건너뛸 개수", ge=0)] = 0
+    limit: Annotated[int | None, Field(description="최대 개수", ge=0, le=100)] = 10
+    order_by: Annotated[ChapterOrder, Field(description="정렬 기준")] = ChapterOrder.CHAPTER_NO
+    desc: Annotated[bool, Field(description="내림차순 여부")] = True
+
+
+class ChapterDTO(DTO):
+    """챕터 DTO"""
+
+    id: Annotated[int, Field(description="챕터 ID")]
+    chapter_no: Annotated[int, Field(description="챕터 번호")]
+    title: Annotated[str, Field(description="제목")]
+    novel_id: Annotated[int, Field(description="소설 ID")]
+    ridi_url: Annotated[HttpUrl | None, Field(description="리디북스 URL")] = None
+    kakao_url: Annotated[HttpUrl | None, Field(description="카카오 페이지 URL")] = None
+    series_url: Annotated[HttpUrl | None, Field(description="시리즈 URL")] = None
+    munpia_url: Annotated[HttpUrl | None, Field(description="문피아 URL")] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def id_to_url(cls, data):
+        """소설 ID를 URL로 변환"""
+        if getattr(data, "ridi_id"):
+            setattr(data, "ridi_url", f"https://ridibooks.com/books/{getattr(data, 'ridi_id')}")
+        return data
+
+
+class ChaptersDTO(DTO):
+    """챕터 목록 DTO"""
+
+    items: Annotated[list[ChapterDTO], Field(description="챕터 목록")]
+
+
+class ChapterMemoBase(Base):
+    """챕터 메모"""
+
+    chapter_id: Annotated[int, Field(description="챕터 ID")]
+    user_id: Annotated[int, Field(description="사용자 ID")]
+
+
+class ChapterMemoContentNull(Base):
+    """챕터 메모 내용"""
+
+    content: Annotated[str | None, Field(description="내용")] = None
+    star: Annotated[int | None, Field(description="별점", ge=1, le=10)] = None
+
+
+class ChapterMemoContent(Base):
+    """챕터 메모 내용"""
+
+    content: Annotated[str, Field(description="내용")]
+    star: Annotated[int, Field(description="별점", ge=1, le=10)]
+
+
+class ChapterMemoCreate(ChapterMemoBase, ChapterMemoContent):
+    """챕터 메모 생성"""
+
+
+class ChapterMemoUpdate(ChapterMemoBase, ChapterMemoContentNull):
+    """챕터 메모 수정"""
+
+
+class ChapterMemoDTO(ChapterMemoContent):
+    """챕터 메모 DTO"""
+
+    updated_at: Annotated[datetime, Field(description="내용 수정일")]

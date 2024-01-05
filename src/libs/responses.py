@@ -116,10 +116,13 @@ class NovelError(BaseError):
     # 404
     NOVEL_NOT_FOUND = NotFoundError(detail="존재하지 않는 소설입니다.")
     NOVEL_MEMO_NOT_FOUND = NotFoundError(detail="존재하지 않는 소설 메모입니다.")
+    CHAPTER_NOT_FOUND = NotFoundError(detail="존재하지 않는 챕터입니다.")
+    CHAPTER_MEMO_NOT_FOUND = NotFoundError(detail="존재하지 않는 챕터 메모입니다.")
 
     # 409
     NOVEL_ALREADY_EXISTS = ConflictError(detail="이미 등록된 소설입니다.")
     NOVEL_MEMO_ALREADY_EXISTS = ConflictError(detail="이미 등록된 소설 메모입니다.")
+    CHAPTER_MEMO_ALREADY_EXISTS = ConflictError(detail="이미 등록된 챕터 메모입니다.")
 
     # 500
     UNEXPECTED_ERROR = InternalServerError(detail="예상치 못한 에러가 발생했습니다.")
