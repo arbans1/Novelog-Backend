@@ -85,7 +85,6 @@ COMMENT ON COLUMN novel_memos.content_updated_at IS '내용 수정일';
 
 -- Chapter Table
 CREATE TABLE chapters (
-    id SERIAL PRIMARY KEY,
     novel_id INT NOT NULL REFERENCES novels(id),
     chapter_no INT NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -95,14 +94,13 @@ CREATE TABLE chapters (
     series_id VARCHAR(20) UNIQUE,
     munpia_id VARCHAR(20) UNIQUE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (novel_id, chapter_no)
 );
 
-CREATE INDEX chapters_novel_id_chapter_no_idx ON chapters(novel_id, chapter_no DESC);
 CREATE INDEX chapters_chapter_no_idx ON chapters(chapter_no DESC);
 
 COMMENT ON TABLE chapters IS '챕터';
-COMMENT ON COLUMN chapters.id IS '아이디 (기본 키)';
 COMMENT ON COLUMN chapters.novel_id IS '소설 아이디 (외래 키)';
 COMMENT ON COLUMN chapters.chapter_no IS '챕터 번호';
 COMMENT ON COLUMN chapters.title IS '제목';
@@ -117,21 +115,28 @@ COMMENT ON COLUMN chapters.updated_at IS '수정일';
 
 -- Chapter Memos Table
 CREATE TABLE chapter_memos (
-    chapter_id INT NOT NULL REFERENCES chapters(id),
+    novel_id INT NOT NULL,
+    chapter_no INT NOT NULL,
     user_id INT NOT NULL REFERENCES users(id),
     content TEXT,
     star INT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (chapter_id, user_id)
+    content_updated_at TIMESTAMP WITH TIME ZONE,
+    PRIMARY KEY (novel_id, chapter_no, user_id),
+    FOREIGN KEY (novel_id, chapter_no) REFERENCES chapters(novel_id, chapter_no)
 );
 
+CREATE INDEX chapter_memos_novel_id_chapter_no_idx ON chapter_memos(novel_id, chapter_no);
+CREATE INDEX chapter_memos_novel_id_user_id_idx ON chapter_memos(novel_id, user_id);
 CREATE INDEX chapter_memos_user_id_idx ON chapter_memos(user_id);
 
 COMMENT ON TABLE chapter_memos IS '챕터 메모';
-COMMENT ON COLUMN chapter_memos.chapter_id IS '챕터 아이디 (외래 키)';
+COMMENT ON COLUMN chapter_memos.novel_id IS '소설 아이디 (외래 키)';
+COMMENT ON COLUMN chapter_memos.chapter_no IS '챕터 번호 (외래 키)';
 COMMENT ON COLUMN chapter_memos.user_id IS '사용자 아이디 (외래 키)';
 COMMENT ON COLUMN chapter_memos.content IS '내용';
 COMMENT ON COLUMN chapter_memos.star IS '별점';
 COMMENT ON COLUMN chapter_memos.created_at IS '생성일';
 COMMENT ON COLUMN chapter_memos.updated_at IS '수정일';
+COMMENT ON COLUMN chapter_memos.content_updated_at IS '내용 수정일';

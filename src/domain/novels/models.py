@@ -2,7 +2,7 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import BOOLEAN, INTEGER, TEXT, TIMESTAMP, VARCHAR, ForeignKey, Index, PrimaryKeyConstraint
+from sqlalchemy import BOOLEAN, FLOAT, INTEGER, TEXT, TIMESTAMP, VARCHAR, ForeignKey, Index, PrimaryKeyConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.domain.base.models import Base
@@ -63,7 +63,7 @@ class NovelMemo(Base):
     novel_id: Mapped[int] = mapped_column(INTEGER, ForeignKey("novels.id"), nullable=False, comment="소설 아이디 (외래 키)")
     user_id: Mapped[int] = mapped_column(INTEGER, ForeignKey("users.id"), nullable=False, comment="사용자 아이디 (외래 키)")
     content: Mapped[str] = mapped_column(TEXT, comment="내용")
-    average_star: Mapped[float] = mapped_column(INTEGER, comment="평균 별점")
+    average_star: Mapped[float] = mapped_column(FLOAT, comment="평균 별점")
     is_favorite: Mapped[bool] = mapped_column(BOOLEAN, comment="즐겨찾기 여부", default=False, nullable=False)
     modified_at: Mapped[datetime] = mapped_column("content_updated_at", TIMESTAMP(timezone=True), comment="내용 수정일")
 
@@ -79,7 +79,6 @@ class Chapter(Base):
 
     __tablename__ = "chapters"
 
-    id: Mapped[int] = mapped_column(primary_key=True, type_=INTEGER, autoincrement=True, comment="ID")
     novel_id: Mapped[int] = mapped_column(INTEGER, ForeignKey("novels.id"), nullable=False, comment="소설 아이디 (외래 키)")
     chapter_no: Mapped[int] = mapped_column(INTEGER, nullable=False, comment="챕터 번호")
     title: Mapped[str] = mapped_column(VARCHAR(255), nullable=False, comment="제목")
@@ -90,7 +89,7 @@ class Chapter(Base):
     munpia_id: Mapped[str] = mapped_column(VARCHAR(20), unique=True, comment="문피아 아이디")
 
     __table_args__ = (
-        Index("chapters_novel_id_chapter_no_idx", novel_id, chapter_no.desc()),
+        PrimaryKeyConstraint(novel_id, chapter_no),
         Index("chapters_chapter_no_idx", chapter_no.desc()),
         {"comment": "소설 챕터"},
     )
@@ -101,13 +100,21 @@ class ChapterMemo(Base):
 
     __tablename__ = "chapter_memos"
 
-    chapter_id: Mapped[int] = mapped_column(INTEGER, ForeignKey("chapters.id"), nullable=False, comment="챕터 아이디 (외래 키)")
+    novel_id: Mapped[int] = mapped_column(
+        INTEGER, ForeignKey("chapters.novel_id"), nullable=False, comment="소설 아이디 (외래 키)"
+    )
+    chapter_no: Mapped[int] = mapped_column(
+        INTEGER, ForeignKey("chapters.chapter_no"), nullable=False, comment="챕터 번호 (외래 키)"
+    )
     user_id: Mapped[int] = mapped_column(INTEGER, ForeignKey("users.id"), nullable=False, comment="사용자 아이디 (외래 키)")
     content: Mapped[str] = mapped_column(TEXT, comment="내용")
     star: Mapped[int] = mapped_column(INTEGER, comment="별점")
+    modified_at: Mapped[datetime] = mapped_column("content_updated_at", TIMESTAMP(timezone=True), comment="내용 수정일")
 
     __table_args__ = (
-        PrimaryKeyConstraint(chapter_id, user_id),
+        PrimaryKeyConstraint(novel_id, chapter_no, user_id),
+        Index("chapter_memos_novel_id_chapter_no_idx", novel_id, chapter_no),
+        Index("chapter_memos_novel_id_user_id_idx", novel_id, user_id),
         Index("chapter_memos_user_id_idx", user_id),
         {"comment": "챕터 메모"},
     )
